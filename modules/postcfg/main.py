@@ -26,6 +26,7 @@ from shutil import copy2
 from distutils.dir_util import copy_tree
 from os.path import join, exists
 from libcalamares.utils import target_env_call
+from libcalamares.utils import target_env_process_output
 
 
 class ConfigController:
@@ -48,7 +49,7 @@ class ConfigController:
             copy_tree("/" + source, join(self.root, target))
 
     def remove_pkg(self, pkg):
-            target_env_call(['xbps-remove', '-Ry', pkg])
+            target_env_process_output(['xbps-remove', '-Ry', pkg])
 
     def umount(self, mp):
         subprocess.call(["umount", "-l", join(self.root, mp)])
@@ -64,45 +65,63 @@ class ConfigController:
 
     def run(self):
         if exists(join(self.root, "usr/sbin/void-installer")):
-            target_env_call(["rm", "-f", "usr/sbin/void-installer"])
+            target_env_process_output(["rm", "-fv", "usr/sbin/void-installer"])
 
         if exists(join(self.root, "usr/sbin/cereus-installer")):
-            target_env_call(["rm", "-f", "usr/sbin/cereus-installer"])
+            target_env_process_output(["rm", "-fv", "usr/sbin/cereus-installer"])
 
         # Initialize package manager databases
         if libcalamares.globalstorage.value("hasInternet"):
-            target_env_call(["xbps-install", "-Syy"])
+            target_env_process_output(["xbps-install", "-Syy"])
 
         # Remove calamares
         self.remove_pkg("calamares-cereus")
         if exists(join(self.root, "usr/share/applications/calamares.desktop")):
-            target_env_call(["rm", "-f", "usr/share/applications/calamares.desktop"])
+            target_env_call(["rm", "-fv", "usr/share/applications/calamares.desktop"])
+
+        # Remove Breeze if Plasma is not installed
+        if exists(join(self.root, "usr/bin/startplasma-x11")):
+            print("Plasma is installed, not removing Breeze")
+        else:
+            self.remove_pkg("breeze")
+        
+        # Remove Emptty if LightDM is present
+        if exists(join(self.root, "etc/lightdm/lightdm.conf")):
+            if exists(join(self.root, "usr/bin/emptty")):
+                target_env_process_output(["rm", "-fv" , "etc/runit/runsvdir/default/emptty"])
+                target_env_process_output(["rm" , "-rfv"], "etc/emptty")
+                self.remove_pkg("emptty")
 
         # Copy skel to root
         self.copy_folder('etc/skel', 'root')
 
         # Update grub.cfg
         if exists(join(self.root, "usr/bin/update-grub")):
-            target_env_call(["update-grub"])
+            target_env_process_output(["update-grub"])
 
         # Enable 'menu_auto_hide' when supported in grubenv
         if exists(join(self.root, "usr/bin/grub-set-bootflag")):
             target_env_call(["grub-editenv", "-", "set", "menu_auto_hide=1", "boot_success=1"])
 
         # Enable plymouth
-        target_env_call(["plymouth-set-default-theme", "-R", "cereus_simply"])
+        target_env_process_output(["plymouth-set-default-theme", "-R", "cereus_simply"])
 
         # Replace /etc/issue msg from live
         if exists(join(self.root, "etc/issue.new")):
-            target_env_call(["mv", "etc/issue.new", "etc/issue"])
+            target_env_process_output(["mv", "etc/issue.new", "etc/issue"])
 
         # Override default XFCE wallpaper
         if exists(join(self.root, "usr/share/backgrounds/xfce/xfce-verticals.png")):
-            target_env_call(["rm", "-f", "usr/share/backgrounds/xfce/xfce-verticals.png"])
-            target_env_call(["ln", "-frs", "usr/share/backgrounds/wallpaper4.png", "usr/share/backgrounds/xfce/xfce-verticals.png"])
+            target_env_process_output(["rm", "-fv", "usr/share/backgrounds/xfce/xfce-verticals.png"])
+            target_env_process_output(["ln", "-frsv", "usr/share/backgrounds/wallpaper4.png", "usr/share/backgrounds/xfce/xfce-verticals.png"])
+
+        # Remove linux-headers meta-package
+        if exists(join(self.root, "usr/src/kernel-headers-6.*")):
+            target_env_process_output(["xbps-remove", "-Fyv", "linux-headers"])
+            target_env_process_output(["echo", "ignorepkg=linux-headers", ">>", "etc/xbps.d/00-ignore.conf"])
 
         # Reconfigure all target packages to ensure everything is ok
-        target_env_call(["xbps-reconfigure", "-fa"])
+        target_env_process_output(["xbps-reconfigure", "-fa"])
 
 def run():
     """ Misc postinstall configurations """
