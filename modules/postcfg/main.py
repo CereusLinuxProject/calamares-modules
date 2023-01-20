@@ -64,16 +64,19 @@ class ConfigController:
         subprocess.call(["mkdir", "-p", join(self.root, dir)])
 
     def run(self):
+        """ Removing CLI installer """
         if exists(join(self.root, "usr/sbin/void-installer")):
             target_env_process_output(["rm", "-fv", "usr/sbin/void-installer"])
 
         if exists(join(self.root, "usr/sbin/cereus-installer")):
             target_env_process_output(["rm", "-fv", "usr/sbin/cereus-installer"])
 
+        """ Initializing package manager databases """
         # Initialize package manager databases
         if libcalamares.globalstorage.value("hasInternet"):
             target_env_process_output(["xbps-install", "-Syy"])
 
+        """ Removing Calamares from target """
         # Remove calamares
         self.remove_pkg("calamares-cereus")
         if exists(join(self.root, "usr/share/applications/calamares.desktop")):
@@ -83,19 +86,23 @@ class ConfigController:
         if exists(join(self.root, "usr/bin/startplasma-x11")):
             print("Plasma is installed, not removing Breeze")
         else:
+            """ Removing Breeze """
             self.remove_pkg("breeze")
         
         # Remove Emptty if LightDM is present
         if exists(join(self.root, "etc/lightdm/lightdm.conf")):
             if exists(join(self.root, "usr/bin/emptty")):
+                """ Removing Emptty """
                 target_env_process_output(["rm", "-fv" , "etc/runit/runsvdir/default/emptty"])
                 target_env_process_output(["rm" , "-rfv"], "etc/emptty")
                 self.remove_pkg("emptty")
 
         # Copy skel to root
+        """ Copying skel to root """
         self.copy_folder('etc/skel', 'root')
 
         # Update grub.cfg
+        """ Updating GRUB """
         if exists(join(self.root, "usr/bin/update-grub")):
             target_env_process_output(["update-grub"])
 
@@ -104,6 +111,7 @@ class ConfigController:
             target_env_call(["grub-editenv", "-", "set", "menu_auto_hide=1", "boot_success=1"])
 
         # Enable plymouth
+        """ Enabling Plymouth on target """
         target_env_process_output(["plymouth-set-default-theme", "-R", "cereus_simply"])
 
         # Replace /etc/issue msg from live
@@ -116,15 +124,16 @@ class ConfigController:
             target_env_process_output(["ln", "-frsv", "usr/share/backgrounds/wallpaper4.png", "usr/share/backgrounds/xfce/xfce-verticals.png"])
 
         # Remove linux-headers meta-package
-        if exists(join(self.root, "usr/src/kernel-headers-6.*")):
-            target_env_process_output(["xbps-remove", "-Fyv", "linux-headers"])
-            target_env_process_output(["echo", "ignorepkg=linux-headers", ">>", "etc/xbps.d/00-ignore.conf"])
+        """ Removing linux-headers from target """
+        target_env_process_output(["xbps-remove", "-Fyv", "linux-headers"])
+        target_env_process_output(["echo", "ignorepkg=linux-headers", ">>", "etc/xbps.d/00-ignore.conf"])
 
         # Reconfigure all target packages to ensure everything is ok
+        """ Reconfiguring all target packages """
         target_env_process_output(["xbps-reconfigure", "-fa"])
 
 def run():
-    """ Misc postinstall configurations """
+    """ Misc post-install configurations """
 
     config = ConfigController()
 
