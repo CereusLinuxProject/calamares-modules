@@ -72,12 +72,11 @@ class ConfigController:
             target_env_process_output(["rm", "-fv", "usr/sbin/cereus-installer"])
 
         """ Initializing package manager databases """
-        # Initialize package manager databases
         if libcalamares.globalstorage.value("hasInternet"):
             target_env_process_output(["xbps-install", "-Syy"])
 
-        """ Removing Calamares from target """
         # Remove calamares
+        """ Removing Calamares from target """
         self.remove_pkg("calamares-cereus")
         if exists(join(self.root, "usr/share/applications/calamares.desktop")):
             target_env_call(["rm", "-fv", "usr/share/applications/calamares.desktop"])
@@ -88,6 +87,14 @@ class ConfigController:
         else:
             """ Removing Breeze """
             self.remove_pkg("breeze")
+
+        # If Plasma or LXQt are installed, remove Qt5ct
+        if exists(join(self.root, "usr/bin/startplasma-x11")):
+            """ Removing Qt5ct """
+            self.remove_pkg("qt5ct")
+        elif exists(join(self.root, "usr/bin/startlxqt")):
+            """ Removing Qt5ct """
+            self.remove_pkg("qt5ct")
         
         # Remove Emptty if LightDM is present
         if exists(join(self.root, "etc/lightdm/lightdm.conf")):
