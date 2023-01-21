@@ -82,8 +82,6 @@ class ConfigController:
         if exists(join(self.root, "usr/share/applications/calamares.desktop")):
             target_env_call(["rm", "-fv", "usr/share/applications/calamares.desktop"])
 
-        if exists(join(self.root, "/home/" + libcalamares.globalstorage.value("username") + "/" + "" )):
-
         # Remove Breeze if Plasma is not installed
         if exists(join(self.root, "usr/bin/startplasma-x11")):
             print("Plasma is installed, not removing Breeze")
