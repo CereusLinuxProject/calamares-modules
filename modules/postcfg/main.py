@@ -26,7 +26,8 @@ from shutil import copy2
 from distutils.dir_util import copy_tree
 from os.path import join, exists
 from libcalamares.utils import target_env_call
-from libcalamares.utils import target_env_process_output
+from libcalamares.utils import libcalamares.utils.target_env_process_output
+from libcalamares.utils import libcalamares.utils.check_target_env_output
 
 
 class ConfigController:
@@ -49,7 +50,7 @@ class ConfigController:
             copy_tree("/" + source, join(self.root, target))
 
     def remove_pkg(self, pkg):
-            target_env_process_output(['xbps-remove', '-Ry', pkg])
+            libcalamares.utils.target_env_process_output(['xbps-remove', '-Ry', pkg])
 
     def umount(self, mp):
         subprocess.call(["umount", "-l", join(self.root, mp)])
@@ -66,20 +67,22 @@ class ConfigController:
     def run(self):
         """ Removing CLI installer """
         if exists(join(self.root, "usr/sbin/void-installer")):
-            target_env_process_output(["rm", "-fv", "usr/sbin/void-installer"])
+            libcalamares.utils.target_env_process_output(["rm", "-fv", "usr/sbin/void-installer"])
 
         if exists(join(self.root, "usr/sbin/cereus-installer")):
-            target_env_process_output(["rm", "-fv", "usr/sbin/cereus-installer"])
+            libcalamares.utils.target_env_process_output(["rm", "-fv", "usr/sbin/cereus-installer"])
 
         """ Initializing package manager databases """
         if libcalamares.globalstorage.value("hasInternet"):
-            target_env_process_output(["xbps-install", "-Syy"])
+            libcalamares.utils.target_env_process_output(["xbps-install", "-Syy"])
 
         # Remove calamares
         """ Removing Calamares from target """
         self.remove_pkg("calamares-cereus")
         if exists(join(self.root, "usr/share/applications/calamares.desktop")):
             target_env_call(["rm", "-fv", "usr/share/applications/calamares.desktop"])
+
+        if exists(join(self.root, "/home/" + libcalamares.globalstorage.value("username") + "/" + "" )):
 
         # Remove Breeze if Plasma is not installed
         if exists(join(self.root, "usr/bin/startplasma-x11")):
@@ -100,8 +103,8 @@ class ConfigController:
         if exists(join(self.root, "etc/lightdm/lightdm.conf")):
             if exists(join(self.root, "usr/bin/emptty")):
                 """ Removing Emptty """
-                target_env_process_output(["rm", "-fv" , "etc/runit/runsvdir/default/emptty"])
-                target_env_process_output(["rm" , "-rfv"], "etc/emptty")
+                libcalamares.utils.target_env_process_output(["rm", "-fv" , "etc/runit/runsvdir/default/emptty"])
+                libcalamares.utils.target_env_process_output(["rm" , "-rfv"], "etc/emptty")
                 self.remove_pkg("emptty")
 
         # Copy skel to root
@@ -111,7 +114,7 @@ class ConfigController:
         # Update grub.cfg
         """ Updating GRUB """
         if exists(join(self.root, "usr/bin/update-grub")):
-            target_env_process_output(["update-grub"])
+            libcalamares.utils.target_env_process_output(["update-grub"])
 
         # Enable 'menu_auto_hide' when supported in grubenv
         if exists(join(self.root, "usr/bin/grub-set-bootflag")):
@@ -119,25 +122,25 @@ class ConfigController:
 
         # Enable plymouth
         """ Enabling Plymouth on target """
-        target_env_process_output(["plymouth-set-default-theme", "-R", "cereus_simply"])
+        libcalamares.utils.target_env_process_output(["plymouth-set-default-theme", "-R", "cereus_simply"])
 
         # Replace /etc/issue msg from live
         if exists(join(self.root, "etc/issue.new")):
-            target_env_process_output(["mv", "etc/issue.new", "etc/issue"])
+            libcalamares.utils.target_env_process_output(["mv", "etc/issue.new", "etc/issue"])
 
         # Override default XFCE wallpaper
         if exists(join(self.root, "usr/share/backgrounds/xfce/xfce-verticals.png")):
-            target_env_process_output(["rm", "-fv", "usr/share/backgrounds/xfce/xfce-verticals.png"])
-            target_env_process_output(["ln", "-frsv", "usr/share/backgrounds/wallpaper4.png", "usr/share/backgrounds/xfce/xfce-verticals.png"])
+            libcalamares.utils.target_env_process_output(["rm", "-fv", "usr/share/backgrounds/xfce/xfce-verticals.png"])
+            libcalamares.utils.target_env_process_output(["ln", "-frsv", "usr/share/backgrounds/wallpaper4.png", "usr/share/backgrounds/xfce/xfce-verticals.png"])
 
         # Remove linux-headers meta-package
         """ Removing linux-headers from target """
-        target_env_process_output(["xbps-remove", "-Fyv", "linux-headers"])
-        target_env_process_output(["echo", "ignorepkg=linux-headers", ">>", "etc/xbps.d/00-ignore.conf"])
+        libcalamares.utils.target_env_process_output(["xbps-remove", "-Fyv", "linux-headers"])
+        libcalamares.utils.target_env_process_output(["echo", "ignorepkg=linux-headers", ">>", "etc/xbps.d/00-ignore.conf"])
 
         # Reconfigure all target packages to ensure everything is ok
         """ Reconfiguring all target packages """
-        target_env_process_output(["xbps-reconfigure", "-fa"])
+        libcalamares.utils.target_env_process_output(["xbps-reconfigure", "-fa"])
 
 def run():
     """ Misc post-install configurations """
