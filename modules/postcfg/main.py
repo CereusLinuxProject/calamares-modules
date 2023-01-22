@@ -109,7 +109,7 @@ class ConfigController:
             if exists(join(self.root, "usr/bin/emptty")):
                 status = ("Removing Emptty")
                 libcalamares.utils.target_env_process_output(["rm", "-fv" , "etc/runit/runsvdir/default/emptty"])
-                libcalamares.utils.target_env_process_output(["rm" , "-rfv"], "etc/emptty")
+                libcalamares.utils.target_env_process_output(["rm" , "-rfv", "etc/emptty"])
                 self.remove_pkg("emptty")
 
         # Copy skel to root
