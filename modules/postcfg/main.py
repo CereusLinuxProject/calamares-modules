@@ -148,7 +148,7 @@ class ConfigController:
         status = ("Removing linux-headers from target")
         libcalamares.utils.target_env_process_output(["xbps-remove", "-RFyv", "linux-headers"])
         ignorepkg = "ignorepkg=linux-headers"
-        mkdir("etc/xbps.d/")
+        self.mkdir("etc/xbps.d/")
         with open(join(self.root, "etc/xbps.d/00-ignore.conf"), 'w') as conf:
             conf.write(ignorepkg)
 
