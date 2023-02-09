@@ -133,21 +133,24 @@ class ConfigController:
         if exists(join(self.root, "etc/issue.new")):
             libcalamares.utils.target_env_process_output(["mv", "etc/issue.new", "etc/issue"])
 
-        # Enable doas on target
+        # If doas installed on target, enable it
         if exists(join(self.root, "usr/bin/doas")):
             doasconf = "permit nopass :root ||\npermit persist :wheel"
             with open(join(self.root, "etc/doas.conf"), 'w') as conf:
                 conf.write(doasconf)
 
         # Override default XFCE wallpaper
-        if exists(join(self.root, "usr/share/backgrounds/xfce/xfce-verticals.png")):
-            libcalamares.utils.target_env_process_output(["rm", "-fv", "usr/share/backgrounds/xfce/xfce-verticals.png"])
-            libcalamares.utils.target_env_process_output(["ln", "-frsv", "usr/share/backgrounds/wallpaper4.png", "usr/share/backgrounds/xfce/xfce-verticals.png"])
+        if exists(join(self.root, "usr/share/backgrounds/xfce/xfce-shapes.png")):
+            libcalamares.utils.target_env_process_output(["rm", "-fv", "usr/share/backgrounds/xfce/xfce-shapes.png"])
+            libcalamares.utils.target_env_process_output(["ln", "-frsv", "usr/share/backgrounds/wallpaper4.png", "usr/share/backgrounds/xfce/xfce-shapes.png"])
 
         # Remove linux-headers meta-package
         status = ("Removing linux-headers from target")
-        libcalamares.utils.target_env_process_output(["xbps-remove", "-Fyv", "linux-headers"])
-        libcalamares.utils.target_env_process_output(["echo", "ignorepkg=linux-headers", ">>", "etc/xbps.d/00-ignore.conf"])
+        libcalamares.utils.target_env_process_output(["xbps-remove", "-RFyv", "linux-headers"])
+        ignorepkg = "ignorepkg=linux-headers"
+        mkdir("etc/xbps.d/")
+        with open(join(self.root, "etc/xbps.d/00-ignore.conf"), 'w') as conf:
+            conf.write(ignorepkg)
 
         # Reconfigure all target packages to ensure everything is ok
         status = ("Reconfiguring all target packages")
