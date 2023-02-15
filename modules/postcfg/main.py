@@ -144,6 +144,9 @@ class ConfigController:
             libcalamares.utils.target_env_process_output(["rm", "-fv", "usr/share/backgrounds/xfce/xfce-shapes.png"])
             libcalamares.utils.target_env_process_output(["ln", "-frsv", "usr/share/backgrounds/wallpaper4.png", "usr/share/backgrounds/xfce/xfce-shapes.png"])
 
+        # Mark current kernel as automatically installed (this allows to remove old LTS kernels as orphaned packages).
+        libcalamares.utils.target_env_process_output(["xbps-pkgdb", "-m", "auto", "linux6.1"])
+
         # Remove linux-headers meta-package
         status = ("Removing linux-headers from target")
         libcalamares.utils.target_env_process_output(["xbps-remove", "-RFyv", "linux-headers"])
